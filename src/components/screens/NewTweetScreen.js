@@ -2,7 +2,11 @@ import React, { Component } from 'react'
 import styled from 'styled-components/native'
 import { Platform, Keyboard } from 'react-native'
 import Touchable from '@appandflow/touchable'
+import { graphql, compose } from 'react-apollo'
+import { connect } from 'react-redux'
 
+import CREATE_TWEET_MUTATION from '../../graphql/mutations/createTweet'
+import GET_TWEETS_QUERY from '../../graphql/queries/getTweets'
 import { colors } from '../../utils/constants'
 
 const Root = styled.View`
@@ -72,7 +76,10 @@ class NewTweetScreen extends Component {
           <TextLength>
             {140 - this.state.text.length}
           </TextLength>
-          <TweetButton>
+          <TweetButton
+            onPress={this.handleCreateTweet}
+            disabled={this.buttonDisabled}
+          >
             <TweetButtonText>Tweet</TweetButtonText>
           </TweetButton>
         </Wrapper>
@@ -81,6 +88,50 @@ class NewTweetScreen extends Component {
   }
 
   handleTextChange = text => this.setState({ text })
+
+  handleCreateTweet = async () => {
+    const { user } = this.props
+    await this.props.mutate({
+      variables: {
+        text: this.state.text,
+      },
+      optimisticResponse: {
+        __typename: 'Mutation',
+        createTweet: {
+          __typename: 'Tweet',
+          _id: Math.round(Math.random() * -1000000),
+          createdAt: new Date(),
+          text: this.state.text,
+          favoriteCount: 0,
+          user: {
+            __typename: 'User',
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatar: user.avatar,
+          },
+        },
+      },
+      update: (store, { data: { createTweet } }) => {
+        const data = store.readQuery({ query: GET_TWEETS_QUERY })
+        if (!data.getTweets.find(t => t._id === createTweet._id)) {
+          store.writeQuery({
+            query: GET_TWEETS_QUERY,
+            data: { getTweets: [{ ...createTweet }, ...data.getTweets] },
+          })
+        }
+      },
+    })
+    Keyboard.dismiss()
+    this.props.navigation.goBack(null)
+  }
+
+  get buttonDisabled() {
+    return this.state.text.length < 5
+  }
 }
 
-export default NewTweetScreen
+export default compose(
+  graphql(CREATE_TWEET_MUTATION),
+  connect(state => ({ user: state.user.info }))
+)(NewTweetScreen)

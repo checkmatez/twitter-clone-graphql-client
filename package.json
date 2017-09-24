@@ -5,8 +5,14 @@
   "author": null,
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "debug": "open 'rndebugger://set-debugger-loc?host=localhost&port=19001'"
+  },
   "dependencies": {
+    "@appandflow/touchable": "^1.2.1",
+    "@expo/react-native-action-sheet": "^1.0.1",
     "apollo-client": "^1.9.2",
+    "date-fns": "^1.28.5",
     "expo": "^20.0.0",
     "react": "16.0.0-alpha.12",
     "react-apollo": "^1.4.15",
@@ -27,6 +33,6 @@
     "eslint-plugin-import": "^2.6.0",
     "eslint-plugin-jsx-a11y": "^5.1.1",
     "eslint-plugin-react": "^7.1.0",
-    "prettier": "^1.7.0"
+    "prettier": "1.5.3"
   }
 }

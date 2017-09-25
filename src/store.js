@@ -3,13 +3,24 @@ import { AsyncStorage } from 'react-native'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import ApolloClient, { createNetworkInterface } from 'apollo-client'
 import thunk from 'redux-thunk'
+import {
+  SubscriptionClient,
+  addGraphQLSubscriptions,
+} from 'subscriptions-transport-ws'
 
 import reducers from './reducers'
 
 const networkInterface = createNetworkInterface({
   uri: 'http://192.168.1.64:3000/graphql',
-  dataIdFromObject: o => o._id,
 })
+
+const wsClient = new SubscriptionClient(
+  'ws://192.168.1.64:3000/subscriptions',
+  {
+    reconnect: true,
+    connectionParams: {},
+  }
+)
 
 networkInterface.use([
   {
@@ -19,20 +30,25 @@ networkInterface.use([
       }
       try {
         const token = await AsyncStorage.getItem('@twitter-clone')
-        console.log(token)
         if (token != null) {
           req.options.headers.authorization = `Bearer ${token}` || null
         }
       } catch (error) {
         throw error
       }
+
       return next()
     },
   },
 ])
 
-export const client = new ApolloClient({
+const networkInterfaceWithSubs = addGraphQLSubscriptions(
   networkInterface,
+  wsClient
+)
+
+export const client = new ApolloClient({
+  networkInterface: networkInterfaceWithSubs,
 })
 
 const middlewares = [client.middleware(), thunk]

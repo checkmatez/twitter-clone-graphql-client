@@ -89,9 +89,9 @@ class NewTweetScreen extends Component {
 
   handleTextChange = text => this.setState({ text })
 
-  handleCreateTweet = async () => {
+  handleCreateTweet = () => {
     const { user } = this.props
-    await this.props.mutate({
+    this.props.mutate({
       variables: {
         text: this.state.text,
       },

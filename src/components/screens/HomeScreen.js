@@ -8,6 +8,7 @@ import { getUserInfo } from '../../actions/user'
 import FeedCard from '../FeedCard'
 import GET_TWEETS_QUERY from '../../graphql/queries/getTweets'
 import ME_QUERY from '../../graphql/queries/me'
+import TWEET_ADDED_SUBSCRIPTIONS from '../../graphql/subscriptions/tweetAdded'
 
 const Root = styled.View`
   flex: 1;
@@ -18,6 +19,26 @@ const List = styled.FlatList``
 
 class HomeScreen extends Component {
   state = {}
+
+  componentWillMount() {
+    this.props.data.subscribeToMore({
+      document: TWEET_ADDED_SUBSCRIPTIONS,
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) {
+          return prev
+        }
+        console.log(subscriptionData)
+        const newTweet = subscriptionData.data.tweetAdded
+        if (!prev.getTweets.find(t => t._id === newTweet._id)) {
+          return {
+            ...prev,
+            getTweets: [{ ...newTweet }, ...prev.getTweets],
+          }
+        }
+        return prev
+      },
+    })
+  }
 
   render() {
     const { data, error } = this.props
